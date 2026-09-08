@@ -84,7 +84,7 @@ function checkPin() {
             showToast("Akses LibTrack Diberikan!");
         }, 1000);
     } else {
-        errorMsg.innerText = "PIN Salah! Coba lagi (Default: 1234)";
+        errorMsg.innerText = "PIN Salah! Coba lagi ";
         clearPin();
     }
 }
