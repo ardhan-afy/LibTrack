@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#ffffff">
+    <title>LibTrack - Inventaris Perpustakaan</title>
+
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="ios-toast">
+        <i data-lucide="check-circle" id="toastIcon"></i>
+        <span id="toastMessage">Pesan Notifikasi</span>
+    </div>
+
+    <!-- SPLASH SCREEN & PIN LOCK 4 DIGIT -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-backdrop"></div>
+        <div class="splash-card">
+            <div class="splash-icon-box">
+                <i data-lucide="library" class="splash-icon"></i>
+            </div>
+            <h1 class="splash-title">LibTrack</h1>
+            <p class="splash-subtitle">Masukkan PIN Akses</p>
+
+            <div class="pin-display">
+                <div class="pin-dot" id="dot0"></div>
+                <div class="pin-dot" id="dot1"></div>
+                <div class="pin-dot" id="dot2"></div>
+                <div class="pin-dot" id="dot3"></div>
+            </div>
+            <div id="pinError" class="splash-error-msg"></div>
+
+            <div class="pin-keypad">
+                <button class="key-btn" onclick="pressPin('1')">1</button>
+                <button class="key-btn" onclick="pressPin('2')">2</button>
+                <button class="key-btn" onclick="pressPin('3')">3</button>
+                <button class="key-btn" onclick="pressPin('4')">4</button>
+                <button class="key-btn" onclick="pressPin('5')">5</button>
+                <button class="key-btn" onclick="pressPin('6')">6</button>
+                <button class="key-btn" onclick="pressPin('7')">7</button>
+                <button class="key-btn" onclick="pressPin('8')">8</button>
+                <button class="key-btn" onclick="pressPin('9')">9</button>
+                <button class="key-btn action" onclick="clearPin()">C</button>
+                <button class="key-btn" onclick="pressPin('0')">0</button>
+                <button class="key-btn action" onclick="deletePin()"><i data-lucide="delete"></i></button>
+            </div>
+
+            <div id="splashLoading" class="splash-loading-box" style="display: none;">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">Memuat sistem LibTrack...</p>
+            </div>
+
+            <div class="splash-divider"></div>
+
+            <div class="splash-author-box">
+                <span class="author-label">Developed by</span>
+                <span class="author-name">Ardhan & Ishom</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div class="app-container">
+        
+        <!-- HEADER UTAMA -->
+        <header class="app-header">
+            <div class="header-top">
+                <div class="brand">
+                    <div class="brand-icon">
+                        <i data-lucide="library"></i>
+                    </div>
+                    <div>
+                        <div class="brand-title">LibTrack</div>
+                        <div class="brand-sub" id="currentScreenTitle">Beranda Utama</div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="ios-btn-icon" onclick="cetakLaporan()" title="Cetak Laporan PDF">
+                        <i data-lucide="printer"></i>
+                    </button>
+                    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+                </div>
+            </div>
+        </header>
+
+        <!-- KONTEN LAYAR MULTI-SCREEN -->
+        <main class="app-content">
+
+            <!-- LAYAR 1: BERANDA -->
+            <section id="screenBeranda" class="app-screen active">
+                <div class="dashboard-banner">
+                    <h3>Halo, Pengelola Perpus! 👋</h3>
+                    <p>sistem inventaris perpustakaan</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon-wrapper blue">
+                            <i data-lucide="box"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statTotal">0</span>
+                            <span class="stat-label">Total Barang</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon-wrapper green">
+                            <i data-lucide="check-circle-2"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statBaik">0</span>
+                            <span class="stat-label">Kondisi Baik</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon-wrapper orange">
+                            <i data-lucide="arrow-right-left"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statDipinjam">0</span>
+                            <span class="stat-label">Dipinjam</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="alertWidget" class="alert-widget" style="display: none;">
+                    <i data-lucide="bell-ring"></i>
+                    <span id="alertWidgetText">Peringatan: Stok barang menipis atau rusak berat!</span>
+                </div>
+
+                <div class="section-card">
+                    <h4 class="section-card-title"><i data-lucide="map-pin"></i> Sebaran Aset per Area</h4>
+                    <div id="areaDistributionList" class="distribution-list"></div>
+                </div>
+            </section>
+
+            <!-- LAYAR 2: INVENTARIS -->
+            <section id="screenInventaris" class="app-screen">
+                <div class="search-filter-box">
+                    <div class="search-bar">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" id="searchInput" placeholder="Cari nama, kode, atau kategori..." oninput="renderData()">
+                    </div>
+                    
+                    <div class="filter-row">
+                        <select id="filterRuangan" class="ios-select" onchange="renderData()">
+                            <option value="">Semua Area</option>
+                            <option value="Rak Buku Utama">Rak Buku Utama</option>
+                            <option value="Area Baca">Area Baca</option>
+                            <option value="Meja Sirkulasi">Meja Sirkulasi</option>
+                            <option value="Ruang Komputer / E-Lib">Ruang Komputer / E-Lib</option>
+                            <option value="Gudang / Arsip">Gudang / Arsip</option>
+                        </select>
+
+                        <select id="filterKategori" class="ios-select" onchange="renderData()">
+                            <option value="">Semua Kategori</option>
+                            <option value="Buku">Buku</option>
+                            <option value="Elektronik">Elektronik</option>
+                            <option value="Mebel">Mebel</option>
+                            <option value="Alat Tulis">Alat Tulis</option>
+                        </select>
+                    </div>
+
+                    <div class="segmented-control">
+                        <button type="button" class="segment-btn active" onclick="setKondisiTab('', this)">Semua</button>
+                        <button type="button" class="segment-btn" onclick="setKondisiTab('Baik', this)">Baik</button>
+                        <button type="button" class="segment-btn" onclick="setKondisiTab('Rusak Ringan', this)">R. Ringan</button>
+                        <button type="button" class="segment-btn" onclick="setKondisiTab('Rusak Berat', this)">R. Berat</button>
+                    </div>
+                </div>
+
+                <div id="inventoryList" class="inventory-grid" style="margin-top: 12px;"></div>
+
+                <button class="fab-btn" onclick="openModalBaru()" title="Tambah Barang">
+                    <i data-lucide="plus"></i>
+                </button>
+            </section>
+
+            <!-- LAYAR 3: PEMINJAMAN -->
+            <section id="screenPeminjaman" class="app-screen">
+                <div class="section-card">
+                    <div class="section-header-flex">
+                        <h4 class="section-card-title"><i data-lucide="arrow-right-left"></i> Transaksi Peminjaman</h4>
+                        <button class="btn-primary-sm" onclick="openModalPinjam()">+ Pinjam</button>
+                    </div>
+                    <div id="peminjamanList" class="peminjaman-list"></div>
+                </div>
+            </section>
+
+            <!-- LAYAR 4: PENGATURAN -->
+            <section id="screenPengaturan" class="app-screen">
+                <div class="settings-list">
+                    <div class="settings-group">
+                        <div class="settings-group-title">Tampilan</div>
+                        <div class="settings-item" onclick="toggleDarkMode()">
+                            <div class="settings-item-left">
+                                <i data-lucide="moon"></i>
+                                <span>Mode Gelap (Dark Mode)</span>
+                            </div>
+                            <span class="settings-status" id="themeStatusText">Nonaktif</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <div class="settings-group-title">Cadangan Data</div>
+                        <div class="settings-item" onclick="exportData()">
+                            <div class="settings-item-left">
+                                <i data-lucide="download"></i>
+                                <span>Export Data (JSON)</span>
+                            </div>
+                        </div>
+                        <div class="settings-item" onclick="document.getElementById('importFile').click()">
+                            <div class="settings-item-left">
+                                <i data-lucide="upload"></i>
+                                <span>Import Data (JSON)</span>
+                            </div>
+                        </div>
+                        <div class="settings-item danger" onclick="resetSemuaData()">
+                            <div class="settings-item-left">
+                                <i data-lucide="rotate-ccw"></i>
+                                <span>Reset Seluruh Data</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <div class="settings-group-title">Informasi App</div>
+                        <div class="settings-item">
+                            <div class="settings-item-left">
+                                <i data-lucide="info"></i>
+                                <span>Versi App</span>
+                            </div>
+                            <span class="settings-status">LibTrack Clean White v3.5</span>
+                        </div>
+                        <div class="settings-item">
+                            <div class="settings-item-left">
+                                <i data-lucide="code"></i>
+                                <span>Pengembang</span>
+                            </div>
+                            <span class="settings-status">Ardhan & Ishom</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- FOOTER APLIKASI -->
+        <footer class="app-footer">
+            <p>App developed by <strong>Ardhan & Ishom</strong></p>
+        </footer>
+
+        <!-- BOTTOM TAB BAR -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="switchTab('screenBeranda', 'Beranda Utama', this)">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Beranda</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('screenInventaris', 'Kelola Inventaris', this)">
+                <i data-lucide="box"></i>
+                <span>Inventaris</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('screenPeminjaman', 'Peminjaman Barang', this)">
+                <i data-lucide="arrow-right-left"></i>
+                <span>Peminjaman</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('screenPengaturan', 'Pengaturan Aplikasi', this)">
+                <i data-lucide="settings"></i>
+                <span>Pengaturan</span>
+            </button>
+        </nav>
+
+        <!-- MODAL FORM BARANG -->
+        <div class="modal-overlay" id="modalOverlay">
+            <div class="modal-card">
+                <div class="modal-drag-handle"></div>
+                <div class="modal-header">
+                    <h2 id="modalTitle">Tambah Inventaris</h2>
+                    <button class="close-btn" onclick="closeModal()"><i data-lucide="x"></i></button>
+                </div>
+                <form id="inventoryForm" onsubmit="simpanData(event)">
+                    <input type="hidden" id="itemId">
+                    
+                    <div class="form-group">
+                        <label>Nama Barang / Aset</label>
+                        <input type="text" id="namaBarang" placeholder="Contoh: Buku Ensiklopedia / Laptop" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kode Inventaris</label>
+                        <input type="text" id="kodeInventaris" placeholder="Contoh: LIB-BK-01" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kategori Barang</label>
+                        <select id="kategoriBarang" required>
+                            <option value="Buku">Buku</option>
+                            <option value="Elektronik">Elektronik</option>
+                            <option value="Mebel">Mebel</option>
+                            <option value="Alat Tulis">Alat Tulis</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Area Perpustakaan</label>
+                        <select id="namaRuangan" required>
+                            <option value="Rak Buku Utama">Rak Buku Utama</option>
+                            <option value="Area Baca">Area Baca</option>
+                            <option value="Meja Sirkulasi">Meja Sirkulasi</option>
+                            <option value="Ruang Komputer / E-Lib">Ruang Komputer / E-Lib</option>
+                            <option value="Gudang / Arsip">Gudang / Arsip</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Jumlah Barang</label>
+                        <input type="number" id="jumlahBarang" min="1" value="1" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kondisi Barang</label>
+                        <select id="kondisiBarang" required>
+                            <option value="Baik">Baik</option>
+                            <option value="Rusak Ringan">Rusak Ringan</option>
+                            <option value="Rusak Berat">Rusak Berat</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-submit">Simpan Data LibTrack</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL FORM PEMINJAMAN -->
+        <div class="modal-overlay" id="modalPinjamOverlay">
+            <div class="modal-card">
+                <div class="modal-drag-handle"></div>
+                <div class="modal-header">
+                    <h2>Catat Peminjaman</h2>
+                    <button class="close-btn" onclick="closeModalPinjam()"><i data-lucide="x"></i></button>
+                </div>
+                <form id="peminjamanForm" onsubmit="simpanPeminjaman(event)">
+                    <div class="form-group">
+                        <label>Pilih Barang</label>
+                        <select id="pinjamItemId" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nama Peminjam</label>
+                        <input type="text" id="namaPeminjam" placeholder="Contoh: Rasyid / Siswa" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Jumlah Dipinjam</label>
+                        <input type="number" id="jumlahPinjam" min="1" value="1" required>
+                    </div>
+                    <button type="submit" class="btn-submit">Proses Peminjaman</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL QR CODE -->
+        <div class="modal-overlay" id="qrModalOverlay">
+            <div class="modal-card text-center">
+                <div class="modal-drag-handle"></div>
+                <div class="modal-header">
+                    <h2>Kode QR Inventaris</h2>
+                    <button class="close-btn" onclick="closeQrModal()"><i data-lucide="x"></i></button>
+                </div>
+                <div class="qr-container">
+                    <img id="qrImage" src="" alt="QR Code">
+                    <p id="qrCodeText" class="qr-text"></p>
+                </div>
+                <button class="btn-submit" onclick="cetakQrCode()">Cetak Label QR</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
