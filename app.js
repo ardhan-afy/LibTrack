@@ -217,9 +217,16 @@ function renderDistribution() {
 
 // PEMINJAMAN LOGIC
 function openModalPinjam() {
+    const tersedia = inventaris.filter(item => item.jumlah > 0);
+    if (tersedia.length === 0) {
+        showToast(inventaris.length === 0
+            ? "Belum ada barang. Tambahkan barang dulu di menu Inventaris."
+            : "Semua barang stoknya habis (0), tidak ada yang bisa dipinjam.");
+        return;
+    }
     const select = document.getElementById("pinjamItemId");
     select.innerHTML = "";
-    inventaris.forEach(item => {
+    tersedia.forEach(item => {
         select.innerHTML += `<option value="${item.id}">${item.nama} (Stok: ${item.jumlah})</option>`;
     });
     document.getElementById("modalPinjamOverlay").classList.add("active");
@@ -237,7 +244,7 @@ function simpanPeminjaman(event) {
 
     const item = inventaris.find(i => i.id === itemId);
     if (!item || item.jumlah < jumlah) {
-        alert("Stok barang tidak mencukupi!");
+        showToast("Stok barang tidak mencukupi!", "error");
         return;
     }
 
